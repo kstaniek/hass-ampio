@@ -11,7 +11,7 @@ from homeassistant.helpers.discovery import async_load_platform
 DOMAIN = "ampio"
 
 
-REQUIREMENTS = ['pyampio==0.0.2']
+REQUIREMENTS = ['pyampio==0.0.3']
 
 CONF_AUTOCONFIG = 'autoconfig'
 CONF_MODULE = 'module'
