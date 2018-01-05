@@ -1,0 +1,265 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Mr Homn
+  # Location required to calculate the time the sun rises and sets
+  latitude: 50.3482
+  longitude: 19.049
+  # C for Celsius, F for Fahrenheit
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: Europe/Warsaw
+  # customize: !include_dir_merge_named customizations
+  customize: !include customize.yaml
+
+history:
+
+logbook:
+
+discovery:
+
+frontend:
+
+logger:
+  default: info
+  logs:
+    homeassistant.components: info
+    homeassistant.custom_components.ampio: debug
+
+
+config:
+
+ampio:
+  port: /dev/tty.usbserial-DN01D1W1
+  autoconfig:
+    - module: MULTISENS
+      items:
+        - name: temperature
+          begin: 1
+          end: 1
+        - name: humidity
+          begin: 1
+          end: 1
+        - name: mean-sea-level-pressure
+          begin: 1
+          end: 1
+      use_module_name: yes
+    - module: MCON-232SATEL
+      items:
+        - name: bin_input
+          begin: 1
+          end: 11
+        - name: bin_output
+          begin: 1
+          end: 16
+        - name: armed
+          begin: 1
+          end: 3
+        - name: alarm
+          begin: 1
+          end: 3
+        - name: breached
+          begin: 1
+          end: 3
+        - name: arming
+          begin: 1
+          end: 3
+        - name: arming10s
+          begin: 1
+          end: 3
+
+
+
+group:
+  Alarm:
+   - alarm_control_panel.a_ground_floor
+   - alarm_control_panel.a_upper_floor
+   - alarm_control_panel.a_outside
+
+alarm_control_panel:
+  - platform: ampio
+    name: a_ground_floor
+    item: 0x00001ecc/*/1
+    friendly_name: Strefa Parteru
+
+  - platform: ampio
+    name: a_upper_floor
+    item: 0x00001ecc/*/2
+    friendly_name: Strefa Piętra
+
+  - platform: ampio
+    name: a_outside
+    item: 0x00001ecc/*/3
+    friendly_name: Strefa Zewnętrzna
+
+
+
+light:
+  - platform: ampio
+    name: l_terrace_halogen
+    item: 0x00001ae0/bin_output/4
+    friendly_name: Halogen Taras
+
+  - platform: ampio
+    name: l_office
+    item: 0x13ec/bin_output/5
+    bright_item: 0x13ec/output/5
+    friendly_name: Biuro
+
+  - platform: ampio
+    name: rgb_salon
+    item: 0x1879/bin_.*/1
+    rgb_item: 0x1879/color_.*/1
+    white_item: 0x1879/output/1
+    friendly_name: Ambient Salon
+
+  - platform: ampio
+    name: l_salon_1
+    item: 0x1e5d/bin_output/1
+    bright_item: 0x1e5d/output/1
+    friendly_name: MLED Salon 1
+
+switch:
+  - platform: ampio
+    name: s_terrace_halogen
+    item: 0x00001ae0/bin_output/4
+    friendly_name: Halogen Taras (Switch)
+
+
+cover:
+  - platform: ampio
+    name: c_office_west
+    item: 0x1968/cover_position/3
+    tilt_item: 0x1968/tilt_position/3
+    friendly_name: Gabinet Zachód
+
+
+#binary_sensor:
+#  - platform: ampio
+#    name: optional1
+#    item: 0x1ecc/bin_input/1
+#    device_class: motion
+#    friendly_name: Input 1
+#
+#  - platform: ampio
+#    name: optional2
+#    item: 0x1ecc/bin_input/2
+#    device_class: motion
+#    friendly_name: Input 2
+#
+#  - platform: ampio
+#    item: 0x1ecc/bin_input/7
+#    device_class: motion
+#
+#  - platform: ampio
+#    name: m_officce
+#    item: 0x1ecc/bin_input/9
+#    device_class: motion
+#    friendly_name: Biuro
+#
+#  - platform: ampio
+#    name: d_main_entrace
+#    item: 0x1ecc/bin_input/24
+#    device_class: door
+#    friendly_name: Drzwi Wejściowe
+#
+#
+#
+#  - platform: ampio
+#    name: z_groundfloor_armed
+#    item: 0x1ecc/armed/1
+#    friendly_name: Strefa Parteru
+#    device_class: safety
+#
+#  - platform: ampio
+#    name: z_upperfloor_armed
+#    item: 0x1ecc/armed/2
+#    friendly_name: Strefa Piętra
+#    device_class: safety
+#
+#  - platform: ampio
+#    name: z_outside_armed
+#    item: 0x1ecc/armed/3
+#    friendly_name: Strefa Zewnętrzna
+#    device_class: safety
+#
+#sensor:
+#  - platform: ampio
+#    name: t_emilia
+#    item: 0x1ccb/temperature/1
+#
+#  - platform: ampio
+#    name: t_salon
+#    item: 0x1ccc/temperature/1
+#
+#  - platform: ampio
+#    name: p_salon
+#    item: 0x1ccc/mean-sea-level-pressure/1
+#    friendly_name: Ciśnienie
+#    unit_of_measurement: hPa
+#
+#  - platform: ampio
+#    name: h_salon
+#    item: 0x1ccc/humidity/1
+#    friendly_name: Wilgotność
+#    unit_of_measurement: "%"
+#
+#  - platform: ampio
+#    name: t_upperfloor_halway
+#    item: 0x1ccd/temperature/1
+#
+#  - platform: ampio
+#    name: t_julia
+#    item: 0x1ccf/temperature/1
+#
+#  - platform: ampio
+#    name: t_hallway
+#    item: 0x1cd0/temperature/1
+#
+#  - platform: ampio
+#    name: t_master_bedroom
+#    item: 0x1cd2/temperature/1
+#
+
+
+
+
+#binary_sensor:
+#  platform: ampio
+#  module:
+#  - can_id: 0x1ecc/bin_input/1
+#    items:
+#      bin_input:
+#        - index: 1
+#          friendly_name: Input1
+#          device_class: motion
+#        - index: 2
+#          friendly_name: Input2
+#        - index: 3
+#          friendly_name: Input3
+#        - index: 4
+#          friendly_name: Input4
+#        - index: 5
+#          friendly_name: Input5
+#        - index: 6
+#          friendly_name: Input6
+#        - index: 7
+#          friendly_name: Input7
+#        - index: 8
+#          friendly_name: Input8
+#        - index: 9
+#          friendly_name: Input9
+#          device_class: motion
+#        - index: 24
+#          friendly_name: Drzwi Wejściowe
+#          device_class: door
+#        - index: 33
+#          friendly_name: Wiatrołap
+#          device_class: door
+#      bin_output:
+#        - index: 1
+#          friendly_name: Output1
+
+
+
+
+
