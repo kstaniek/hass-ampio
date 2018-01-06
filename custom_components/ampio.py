@@ -11,7 +11,7 @@ from homeassistant.helpers.discovery import async_load_platform
 DOMAIN = "ampio"
 
 
-REQUIREMENTS = ['pyampio==0.0.4']
+REQUIREMENTS = ['pyampio==0.0.5']
 
 CONF_AUTOCONFIG = 'autoconfig'
 CONF_MODULE = 'module'
@@ -26,6 +26,10 @@ MODULES = ["MULTISENS"]
 
 
 ATTR_DISCOVER_ITEMS = "items"
+ATTR_MODULE_NAME = 'module_name'
+ATTR_MODULE_PART_NUMBER = 'module_part_number'
+ATTR_CAN_ID = 'can_id'
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +50,7 @@ ITEMS_SCHEMA = vol.Schema({
 AUTOCONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_ITEMS): [ITEMS_SCHEMA],
     vol.Required(CONF_MODULE): cv.string,
-    vol.Optional(CONF_USE_MODULE_NAME): vol.Boolean,
+    vol.Optional(CONF_USE_MODULE_NAME, default=False): cv.string,
 })
 
 CONFIG_SCHEMA = vol.Schema({
@@ -76,10 +80,12 @@ def on_discovered(hass, config, modules):
     global is_discovered
     is_discovered = True
     _LOGGER.info("Ampio modules discovered.")
+    print(config)
+    ampio_config = config[DOMAIN]
     items = defaultdict(list)
-    if CONF_AUTOCONFIG in config[DOMAIN]:
+    if CONF_AUTOCONFIG in ampio_config:
         for can_id, mod in modules.modules.items():
-            for details in config[DOMAIN][CONF_AUTOCONFIG]:
+            for details in ampio_config[CONF_AUTOCONFIG]:
                 module_name = details[CONF_MODULE]
                 if module_name == mod.part_number:
                     for item in details[CONF_ITEMS]:
@@ -87,11 +93,15 @@ def on_discovered(hass, config, modules):
                         component = item_to_sensor_map.get(name, None)
                         if component:
                             for i in range(item[CONF_BEGIN], item[CONF_END] + 1):
-                                items[component].append({
-                                    CONF_ITEM: "{}/{}/{}".format(can_id, name, i),
-                                    CONF_FRIENDLY_NAME: name + "_{:03}".format(i),
-                                })
+                                config = {
+                                    CONF_ITEM: (can_id, name, i),
+                                }
+                                if not details[CONF_USE_MODULE_NAME]:
+                                    config[CONF_FRIENDLY_NAME] = name + "_{:03}".format(i)
+                                items[component].append(config)
 
+    from pprint import pprint
+    pprint(items)
     for component, details in items.items():
         hass.async_add_job(
             async_load_platform(hass, component, DOMAIN, {

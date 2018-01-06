@@ -12,7 +12,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.core import callback
 
-from ..ampio import ATTR_DISCOVER_ITEMS
+from ..ampio import unpack_item_address
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ sensor:
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ITEM): cv.string,
+    vol.Required(CONF_ITEM): unpack_item_address,
     vol.Optional(CONF_NAME, default=None): cv.string,
     vol.Optional(CONF_TYPE): cv.string,
     vol.Optional(CONF_FRIENDLY_NAME, default=None): cv.string,
@@ -84,15 +84,12 @@ def async_add_devices_discovery(hass, discovery_info, async_add_devices):
 class AmpioSensor(Entity):
 
     def __init__(self, hass, config):
-        self.ampio = hass.data[DOMAIN]
         self.hass = hass
+        self.ampio = hass.data[DOMAIN]
+        self.config = config
 
-        item = config[CONF_ITEM]
-        can_id, self.attribute, index = item.split('/')
-        self.can_id = int(can_id, 0)
-        self.index = int(index, 0)
-
-        self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(self.can_id, self.attribute, self.index))
+        self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(*config[CONF_ITEM]))
+        self.ampio.register_on_value_change_callback(*config[CONF_ITEM], callback=self.schedule_update_ha_state)
         self._device_class = config.get(CONF_DEVICE_CLASS, None)
         self._attributes = {}
 
@@ -100,20 +97,15 @@ class AmpioSensor(Entity):
             self._attributes = {
                 ATTR_FRIENDLY_NAME: config[CONF_FRIENDLY_NAME],
             }
+        else:
+            self._attributes = {
+                ATTR_FRIENDLY_NAME: self.ampio.get_module_name(config[CONF_ITEM][0]),
+            }
 
-        # TODO: implement API
-        # self._attributes.update(module_name=self.module_manager.get_module(can_id).name)
-
-        self.ampio.register_on_value_change_callback(
-            can_id=self.can_id,
-            attribute=self.attribute,
-            index=self.index,
-            callback=self.schedule_update_ha_state
-        )
 
     @property
     def state(self):
-        return self.ampio.get_item_state(self.can_id, self.attribute, self.index)
+        return self.ampio.get_item_state(*self.config[CONF_ITEM])
 
     @property
     def name(self):
@@ -133,10 +125,4 @@ class AmpioSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
-        # TODO: Implement API in pyampio to get the unit
-        return None
-
-    # @property
-    # def device_class(self):
-    #     """Return the class of this sensor."""
-    #     return self._device_class
+        return self.ampio.get_item_measurement_unit(*self.config[CONF_ITEM])

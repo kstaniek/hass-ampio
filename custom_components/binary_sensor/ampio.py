@@ -11,7 +11,8 @@ from homeassistant.components.binary_sensor import (
 import homeassistant.helpers.config_validation as cv
 from homeassistant.core import callback
 
-from ..ampio import ATTR_DISCOVER_ITEMS
+from ..ampio import unpack_item_address, ATTR_MODULE_NAME, ATTR_MODULE_PART_NUMBER, ATTR_CAN_ID
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ binary_sensor:
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ITEM): cv.string,
+    vol.Required(CONF_ITEM): unpack_item_address,
     vol.Optional(CONF_NAME, default=None): cv.string,
     vol.Optional(CONF_DEVICE_CLASS): cv.string,
     vol.Optional(CONF_FRIENDLY_NAME, default=None): cv.string,
@@ -95,14 +96,13 @@ class AmpioBinarySensor(BinarySensorDevice):
 
     def __init__(self, hass, config):
         # TODO: Implement API for module manager
-        self.module_manager = hass.data[DOMAIN]._modules
         self.hass = hass
+        self.ampio = hass.data[DOMAIN]
+        self.config = config
 
-        item = config[CONF_ITEM]
-        can_id, attribute, index = item.split('/')
-        can_id = int(can_id, 0)
-        index = int(index, 0)
-        self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(can_id, attribute, index))
+        self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(*self.config[CONF_ITEM]))
+        self.ampio.register_on_value_change_callback(*config[CONF_ITEM], callback=self.schedule_update_ha_state)
+
         self._device_class = config.get(CONF_DEVICE_CLASS, None)
         self._attributes = {}
 
@@ -111,23 +111,13 @@ class AmpioBinarySensor(BinarySensorDevice):
                 ATTR_FRIENDLY_NAME: config[CONF_FRIENDLY_NAME],
             }
 
-        self._attributes.update(module_name=self.module_manager.get_module(can_id).name)
-        self._state = False
-
-        def on_value_changed(modules, can_id, attribute, index, old_value, new_value, unit):
-            self._state = new_value
-            self.schedule_update_ha_state()
-
-        self.module_manager.add_on_value_changed_callback(
-            can_id=can_id,
-            attribute=attribute,
-            index=index,
-            callback=on_value_changed
-        )
+        self._attributes[ATTR_MODULE_NAME] = self.ampio.get_module_name(config[CONF_ITEM][0])
+        self._attributes[ATTR_MODULE_PART_NUMBER] = self.ampio.get_module_part_number(config[CONF_ITEM][0])
+        self._attributes[ATTR_CAN_ID] = config[CONF_ITEM][0]
 
     @property
     def is_on(self):
-        return bool(self._state)
+        return self.ampio.get_item_state(*self.config[CONF_ITEM])
 
     @property
     def name(self):

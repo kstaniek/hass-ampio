@@ -133,6 +133,69 @@ cover:
     friendly_name: Gabinet Zachód
 
 
+climate:
+  - platform: ampio
+    name: h_hallway
+    item: 0x1b88/.*/1
+    humidity_item: 0x1cd0/humidity/1
+    friendly_name: Korytarz
+
+  - platform: ampio
+    name: h_garage
+    item: 0x1b88/.*/2
+    friendly_name: Garaż
+
+  - platform: ampio
+    name: h_salon
+    item: 0x1b88/.*/3
+    friendly_name: Salon
+
+  - platform: ampio
+    name: h_office
+    item: 0x1b88/.*/4
+    humidity_item: 0x1cd8/humidity/1
+    friendly_name: Gabinet
+
+  - platform: ampio
+    name: h_wc
+    item: 0x1b88/.*/5
+    friendly_name: WC
+
+  - platform: ampio
+    name: h_room_julia
+    item: 0x1b88/.*/6
+    friendly_name: Pokój Julii
+
+  - platform: ampio
+    name: h_room_emily
+    item: 0x1b88/.*/7
+    friendly_name: Pokój Emilii
+
+  - platform: ampio
+    name: h_master_bathroom
+    item: 0x1b88/.*/8
+    friendly_name: Łazienka Główna
+
+  - platform: ampio
+    name: h_master_bedroom
+    item: 0x1b88/.*/9
+    friendly_name: Sypialnia
+
+  - platform: ampio
+    name: h_room_alice
+    item: 0x1b88/.*/10
+    friendly_name: Pokój Alicji
+
+  - platform: ampio
+    name: h_bathroom
+    item: 0x1b88/.*/11
+    friendly_name: Łazienka
+
+
+
+
+
+
 #binary_sensor:
 #  - platform: ampio
 #    name: optional1
