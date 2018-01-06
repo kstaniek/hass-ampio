@@ -80,7 +80,6 @@ def on_discovered(hass, config, modules):
     global is_discovered
     is_discovered = True
     _LOGGER.info("Ampio modules discovered.")
-    print(config)
     ampio_config = config[DOMAIN]
     items = defaultdict(list)
     if CONF_AUTOCONFIG in ampio_config:
@@ -100,8 +99,6 @@ def on_discovered(hass, config, modules):
                                     config[CONF_FRIENDLY_NAME] = name + "_{:03}".format(i)
                                 items[component].append(config)
 
-    from pprint import pprint
-    pprint(items)
     for component, details in items.items():
         hass.async_add_job(
             async_load_platform(hass, component, DOMAIN, {
