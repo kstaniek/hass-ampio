@@ -54,10 +54,13 @@ class AmpioLight(Light):
         self.hass = hass
         self.config = config
         self.ampio = hass.data[DOMAIN]
+        self._can_id = config[CONF_ITEM][0]
+        self._index = config[CONF_ITEM][2]
         self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(*config[CONF_ITEM]))
         self.ampio.register_on_value_change_callback(*config[CONF_ITEM], callback=self.schedule_update_ha_state)
         self._supported_features = 0
         self._attributes = {}
+        self._last_brightness = 0xff
 
         if CONF_BRIGHT_ITEM in config:
             self.ampio.register_on_value_change_callback(*config[CONF_BRIGHT_ITEM], callback=self.schedule_update_ha_state)
@@ -74,9 +77,9 @@ class AmpioLight(Light):
         if CONF_FRIENDLY_NAME in config:
             self._attributes[ATTR_FRIENDLY_NAME] = config[CONF_FRIENDLY_NAME]
 
-        self._attributes[ATTR_MODULE_NAME] = self.ampio.get_module_name(config[CONF_ITEM][0])
-        self._attributes[ATTR_MODULE_PART_NUMBER] = self.ampio.get_module_part_number(config[CONF_ITEM][0])
-        self._attributes[ATTR_CAN_ID] = config[CONF_ITEM][0]
+        self._attributes[ATTR_MODULE_NAME] = self.ampio.get_module_name(self._can_id)
+        self._attributes[ATTR_MODULE_PART_NUMBER] = self.ampio.get_module_part_number(self._can_id)
+        self._attributes[ATTR_CAN_ID] = "{:08x}".format(self._can_id)
 
     @property
     def is_on(self):
@@ -106,14 +109,19 @@ class AmpioLight(Light):
             if self._supported_features & SUPPORT_BRIGHTNESS else None
 
     @property
+    def last_brightness(self):
+        return self.ampio.get_item_last_state(*self.config[CONF_BRIGHT_ITEM]) \
+            if self._supported_features & SUPPORT_BRIGHTNESS else None
+
+    @property
     def rgb_color(self):
         if not self._supported_features & SUPPORT_RGB_COLOR:
             return None, None, None
 
         can_id, _, index = self.config[CONF_RGB_ITEM]
-        red = self.ampio.get_item_state(can_id, "color_red", index)
-        green = self.ampio.get_item_state(can_id, "color_green", index)
-        blue = self.ampio.get_item_state(can_id, "color_blue", index)
+        red = self.ampio.get_item_state(self._can_id, "color_red", self._index)
+        green = self.ampio.get_item_state(self._can_id, "color_green", self._index)
+        blue = self.ampio.get_item_state(self._can_id, "color_blue", self._index)
         return red, green, blue
 
     @property
@@ -131,8 +139,16 @@ class AmpioLight(Light):
         """Return the state attributes."""
         return self._attributes
 
-    def turn_on(self, **kwargs):
-        pass
-
-    def turn_off(self, **kwargs):
+    @asyncio.coroutine
+    def async_turn_on(self, **kwargs):
+        brightness = kwargs.get(ATTR_BRIGHTNESS, self.last_brightness)
+        brightness = 0xff if brightness is None or brightness == 0x00 else brightness
+        yield from self.ampio.send_value_with_index(self._can_id, self._index, brightness)
+        
+    @asyncio.coroutine
+    def async_turn_off(self, **kwargs):
+        current_brightness = self.brightness
+        if current_brightness is not None:
+            self._last_brightness = current_brightness
+        yield from self.ampio.send_value_with_index(self._can_id, self._index, 0x00)
         pass

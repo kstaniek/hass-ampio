@@ -12,6 +12,7 @@ from homeassistant.const import (
     STATE_ALARM_PENDING, STATE_ALARM_TRIGGERED, STATE_UNKNOWN, STATE_ALARM_ARMING,
     CONF_NAME, CONF_CODE, CONF_FRIENDLY_NAME, ATTR_FRIENDLY_NAME)
 
+from ..ampio import unpack_item_address, ATTR_MODULE_NAME, ATTR_MODULE_PART_NUMBER, ATTR_CAN_ID
 
 STATE_ALARM_ARMING_10s = 'Arming(10s)'
 
@@ -43,7 +44,7 @@ CONF_ZONES = 'zones'
 
 PLATFORM_SCHEMA = alarm.PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
-    vol.Required(CONF_ITEM): cv.string,
+    vol.Required(CONF_ITEM): unpack_item_address,
     vol.Optional(CONF_FRIENDLY_NAME, default=None): cv.string,
 })
 
@@ -62,20 +63,15 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
 class AmpioSatelAlarm(alarm.AlarmControlPanel):
     def __init__(self, hass, config):
-        # TODO: Add API pyampio to get ModuleManager
-        self.module_manager = hass.data[DOMAIN]._modules
-        self._name = config[CONF_NAME]
-        self._states = {
-            'armed': False,
-            'alarm': False,
-            'arming': False,
-            'arming10s': False,
-            'breached': False,
-        }
+        self.hass = hass
+        self.ampio = hass.data[DOMAIN]
+        self.config = config
 
-        can_id, attribute, index = config[CONF_ITEM].split('/')
-        can_id = int(can_id, 0)
-        index = int(index, 0)
+        self._can_id = config[CONF_ITEM][0]
+        self._index = config[CONF_ITEM][2]
+
+        self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(*config[CONF_ITEM]))
+        self.ampio.register_on_value_change_callback(*config[CONF_ITEM], callback=self.schedule_update_ha_state)
 
         self._attributes = {}
 
@@ -84,19 +80,10 @@ class AmpioSatelAlarm(alarm.AlarmControlPanel):
                 ATTR_FRIENDLY_NAME: config[CONF_FRIENDLY_NAME],
             }
 
-        self._attributes.update(module_name=self.module_manager.get_module(can_id).name)
+        self._attributes[ATTR_MODULE_NAME] = self.ampio.get_module_name(self._can_id)
+        self._attributes[ATTR_MODULE_PART_NUMBER] = self.ampio.get_module_part_number(self._can_id)
+        self._attributes[ATTR_CAN_ID] = "{:08x}".format(self._can_id)
 
-        def on_zone_state_changed(modules, can_id, attribute, index, old_value, new_value, unit):
-            self._states[attribute] = new_value
-            self.schedule_update_ha_state()
-
-        for attribute in self._states.keys():
-            self.module_manager.add_on_value_changed_callback(
-                can_id=can_id,
-                attribute=attribute,
-                index=index,
-                callback=on_zone_state_changed
-            )
 
     @property
     def name(self):
@@ -112,21 +99,21 @@ class AmpioSatelAlarm(alarm.AlarmControlPanel):
     def state(self):
         _state = STATE_UNKNOWN
 
-        if self._states['alarm']:
+        if self.ampio.get_item_state(self._can_id, 'alarm', self._index):
             _state = STATE_ALARM_TRIGGERED
         else:
             _state = STATE_ALARM_DISARMED
 
-        if self._states['armed']:
+        if self.ampio.get_item_state(self._can_id, 'armed', self._index):
             _state = STATE_ALARM_ARMED_AWAY
 
-        if self._states['arming']:
+        if self.ampio.get_item_state(self._can_id, 'arming', self._index):
             _state = STATE_ALARM_ARMING
 
-        if self._states['arming10s']:
+        if self.ampio.get_item_state(self._can_id, 'arming10s', self._index):
             _state = STATE_ALARM_ARMING_10s
 
-        if self._states['breached']:
+        if self.ampio.get_item_state(self._can_id, 'breached', self._index):
             _state = STATE_ALARM_PENDING
 
         return _state

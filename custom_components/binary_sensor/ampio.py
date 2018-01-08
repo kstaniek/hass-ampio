@@ -95,7 +95,6 @@ def async_add_devices_discovery(hass, discovery_info, async_add_devices):
 class AmpioBinarySensor(BinarySensorDevice):
 
     def __init__(self, hass, config):
-        # TODO: Implement API for module manager
         self.hass = hass
         self.ampio = hass.data[DOMAIN]
         self.config = config

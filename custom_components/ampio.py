@@ -3,6 +3,7 @@ import asyncio
 import voluptuous as vol
 from functools import partial
 from collections import defaultdict
+from re import compile, error
 
 from homeassistant.helpers import config_validation as cv
 from homeassistant.const import (CONF_PORT, CONF_FRIENDLY_NAME)
@@ -11,7 +12,7 @@ from homeassistant.helpers.discovery import async_load_platform
 DOMAIN = "ampio"
 
 
-REQUIREMENTS = ['pyampio==0.0.5']
+REQUIREMENTS = ['pyampio==0.0.6']
 
 CONF_AUTOCONFIG = 'autoconfig'
 CONF_MODULE = 'module'
@@ -38,6 +39,10 @@ def unpack_item_address(value):
     can_id, attribute, index = value.split('/')
     can_id = int(can_id, 0)
     index = int(index, 0)
+    try:
+        compile(attribute)
+    except error:
+        raise vol.Invalid("Invalid attribute pattern. Must be a valid RegEx.")
     return can_id, attribute, index
 
 
@@ -75,7 +80,7 @@ item_to_sensor_map = {
     'breached': 'binary_sensor',
 }
 
-
+@asyncio.coroutine
 def on_discovered(hass, config, modules):
     global is_discovered
     is_discovered = True

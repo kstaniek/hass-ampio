@@ -78,17 +78,17 @@ group:
 alarm_control_panel:
   - platform: ampio
     name: a_ground_floor
-    item: 0x00001ecc/*/1
+    item: 0x00001ecc/.*/1
     friendly_name: Strefa Parteru
 
   - platform: ampio
     name: a_upper_floor
-    item: 0x00001ecc/*/2
+    item: 0x00001ecc/.*/2
     friendly_name: Strefa Piętra
 
   - platform: ampio
     name: a_outside
-    item: 0x00001ecc/*/3
+    item: 0x00001ecc/.*/3
     friendly_name: Strefa Zewnętrzna
 
 
@@ -136,63 +136,82 @@ cover:
 climate:
   - platform: ampio
     name: h_hallway
-    item: 0x1b88/.*/1
+    item: 0x1b88/measured/1
+    target_item: 0x1b88/setpoint/1
     humidity_item: 0x1cd0/humidity/1
+    operation_mode_item: 0x1b88/mode/1
     friendly_name: Korytarz
 
   - platform: ampio
     name: h_garage
-    item: 0x1b88/.*/2
+    item: 0x1b88/measured/2
+    target_item: 0x1b88/setpoint/2
+    operation_mode_item: 0x1b88/mode/2
     friendly_name: Garaż
 
   - platform: ampio
     name: h_salon
-    item: 0x1b88/.*/3
+    item: 0x1b88/measured/3
+    target_item: 0x1b88/setpoint/3
+    operation_mode_item: 0x1b88/mode/3
     friendly_name: Salon
 
   - platform: ampio
     name: h_office
-    item: 0x1b88/.*/4
+    item: 0x1b88/measured/4
+    target_item: 0x1b88/setpoint/4
     humidity_item: 0x1cd8/humidity/1
+    operation_mode_item: 0x1b88/mode/4
     friendly_name: Gabinet
 
   - platform: ampio
     name: h_wc
-    item: 0x1b88/.*/5
+    item: 0x1b88/measured/5
+    target_item: 0x1b88/setpoint/5
+    operation_mode_item: 0x1b88/mode/5
     friendly_name: WC
 
   - platform: ampio
     name: h_room_julia
-    item: 0x1b88/.*/6
+    item: 0x1b88/measured/6
+    target_item: 0x1b88/setpoint/6
+    operation_mode_item: 0x1b88/mode/6
     friendly_name: Pokój Julii
 
   - platform: ampio
     name: h_room_emily
-    item: 0x1b88/.*/7
+    item: 0x1b88/measured/7
+    target_item: 0x1b88/setpoint/7
+    operation_mode_item: 0x1b88/mode/7
     friendly_name: Pokój Emilii
 
   - platform: ampio
     name: h_master_bathroom
-    item: 0x1b88/.*/8
+    item: 0x1b88/measured/8
+    target_item: 0x1b88/setpoint/8
+    operation_mode_item: 0x1b88/mode/8
     friendly_name: Łazienka Główna
 
   - platform: ampio
     name: h_master_bedroom
-    item: 0x1b88/.*/9
+    item: 0x1b88/measured/9
+    target_item: 0x1b88/setpoint/9
+    operation_mode_item: 0x1b88/mode/9
     friendly_name: Sypialnia
 
   - platform: ampio
     name: h_room_alice
-    item: 0x1b88/.*/10
+    item: 0x1b88/measured/10
+    target_item: 0x1b88/setpoint/10
+    operation_mode_item: 0x1b88/mode/10
     friendly_name: Pokój Alicji
 
   - platform: ampio
     name: h_bathroom
-    item: 0x1b88/.*/11
+    item: 0x1b88/measured/11
+    target_item: 0x1b88/setpoint/11
+    operation_mode_item: 0x1b88/mode/11
     friendly_name: Łazienka
-
-
-
 
 
 
