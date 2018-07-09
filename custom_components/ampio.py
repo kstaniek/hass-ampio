@@ -6,13 +6,13 @@ from collections import defaultdict
 from re import compile, error
 
 from homeassistant.helpers import config_validation as cv
-from homeassistant.const import (CONF_PORT, CONF_FRIENDLY_NAME)
+from homeassistant.const import CONF_PORT
 from homeassistant.helpers.discovery import async_load_platform
 
 DOMAIN = "ampio"
 
 
-REQUIREMENTS = ['pyampio==0.0.6']
+REQUIREMENTS = ['pyampio==0.1.5']
 
 CONF_AUTOCONFIG = 'autoconfig'
 CONF_MODULE = 'module'
@@ -54,8 +54,7 @@ ITEMS_SCHEMA = vol.Schema({
 
 AUTOCONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_ITEMS): [ITEMS_SCHEMA],
-    vol.Required(CONF_MODULE): cv.string,
-    vol.Optional(CONF_USE_MODULE_NAME, default=False): cv.string,
+    vol.Required(CONF_MODULE): cv.string
 })
 
 CONFIG_SCHEMA = vol.Schema({
@@ -78,12 +77,13 @@ item_to_sensor_map = {
     'arming': 'binary_sensor',
     'arming10s': 'binary_sensor',
     'breached': 'binary_sensor',
+    'bin_output': 'switch',
+    'flag': 'switch',
 }
+
 
 @asyncio.coroutine
 def on_discovered(hass, config, modules):
-    global is_discovered
-    is_discovered = True
     _LOGGER.info("Ampio modules discovered.")
     ampio_config = config[DOMAIN]
     items = defaultdict(list)
@@ -100,8 +100,6 @@ def on_discovered(hass, config, modules):
                                 config = {
                                     CONF_ITEM: (can_id, name, i),
                                 }
-                                if not details[CONF_USE_MODULE_NAME]:
-                                    config[CONF_FRIENDLY_NAME] = name + "_{:03}".format(i)
                                 items[component].append(config)
 
     for component, details in items.items():
@@ -116,14 +114,29 @@ def on_discovered(hass, config, modules):
 @asyncio.coroutine
 def async_setup(hass, config):
     from pyampio.gateway import AmpioGateway
+    from pyampio.version import __version__
 
     port = config[DOMAIN].get(CONF_PORT)
+
+    _LOGGER.info("Initializing Ampio Gateway version: {}".format(__version__))
 
     ampio_gw = AmpioGateway(port=port, loop=hass.loop)
     hass.data[DOMAIN] = ampio_gw
     ampio_gw.add_on_discovered_callback(partial(on_discovered, hass, config))
 
-    while not is_discovered:
+    _LOGGER.info("Waiting for discovery to be ready")
+    while not ampio_gw.is_ready:
         yield
 
     return True
+
+
+class Ampio:
+    @property
+    def unique_id(self):
+        return "{:08x}/{}/{}".format(*self.config[CONF_ITEM])
+
+    @property
+    def should_poll(self):
+        """No polling needed within Ampio."""
+        return False

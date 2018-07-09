@@ -1,0 +1,99 @@
+- platform: ampio
+  name: c_livingroom
+  item: 0x196A/cover_position/1
+  tilt_item: 0x196A/tilt_position/1
+  friendly_name: Salon
+
+- platform: ampio
+  name: c_livingroom_terrace
+  item: 0x196A/cover_position/2
+  tilt_item: 0x196A/tilt_position/2
+  friendly_name: Salon Taras
+
+- platform: ampio
+  name: c_kitchen_north
+  item: 0x196A/cover_position/3
+  tilt_item: 0x196A/tilt_position/3
+  friendly_name: Kuchnia Północ
+
+- platform: ampio
+  name: c_kitchen_east
+  item: 0x196A/cover_position/4
+  tilt_item: 0x196A/tilt_position/4
+  friendly_name: Kuchnia Wschód
+
+
+- platform: ampio
+  name: c_bonsai
+  item: 0x1968/cover_position/1
+  tilt_item: 0x1968/tilt_position/1
+  friendly_name: Bonsai
+
+- platform: ampio
+  name: c_office_north
+  item: 0x1968/cover_position/2
+  tilt_item: 0x1968/tilt_position/2
+  friendly_name: Gabinet Północ
+
+- platform: ampio
+  name: c_office_west
+  item: 0x1968/cover_position/3
+  tilt_item: 0x1968/tilt_position/3
+  friendly_name: Gabinet Zachód
+
+- platform: ampio
+  name: c_masterbedroom
+  item: 0x1968/cover_position/4
+  tilt_item: 0x1968/tilt_position/4
+  friendly_name: Sypialnia
+
+
+- platform: ampio
+  name: c_masterbedroom_wardrobe
+  item: 0x1965/cover_position/1
+  tilt_item: 0x1965/tilt_position/1
+  friendly_name: Garderoba Sypialnia
+
+- platform: ampio
+  name: c_masterbathroom
+  item: 0x1965/cover_position/2
+  tilt_item: 0x1965/tilt_position/2
+  friendly_name: Główna Łazienka
+
+- platform: ampio
+  name: c_emily
+  item: 0x1965/cover_position/3
+  tilt_item: 0x1965/tilt_position/3
+  friendly_name: Pokój Emilii
+
+- platform: ampio
+  name: c_julia
+  item: 0x1965/cover_position/4
+  tilt_item: 0x1965/tilt_position/4
+  friendly_name: Pokój Julii
+
+
+- platform: ampio
+  name: c_washing
+  item: 0x1B2A/cover_position/1
+  tilt_item: 0x1B2A/tilt_position/1
+  friendly_name: Pralnia
+
+- platform: ampio
+  name: c_alice
+  item: 0x1B2A/cover_position/2
+  tilt_item: 0x1B2A/tilt_position/2
+  friendly_name: Pokój Alicji
+
+- platform: ampio
+  name: c_water_from_tank
+  item: 0x1B2A/cover_position/3
+  tilt_item: 0x1B2A/tilt_position/3
+  friendly_name: Woda ze zbiornika
+
+- platform: ampio
+  name: c_garage_gate
+  item: 0x1B2A/cover_position/4
+  tilt_item: 0x1B2A/tilt_position/4
+  friendly_name: Brama Garażowa
+

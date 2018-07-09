@@ -31,7 +31,6 @@ binary_sensor.00001ecc_bin_input_10:
 binary_sensor.00001ecc_bin_input_11:
   device_class: motion
   friendly_name: (R) WC
-
 binary_sensor.00001ecc_alarm_1:
   device_class: safety
   friendly_name: Alarm Parter
@@ -41,3 +40,5 @@ binary_sensor.00001ecc_alarm_2:
 binary_sensor.00001ecc_alarm_3:
   device_class: safety
   friendly_name: Alarm Zewnętrzny
+switch.00001f3e_bin_output_1:
+  friendly_name: MDOT Gabinet Lampa

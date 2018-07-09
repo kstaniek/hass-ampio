@@ -12,11 +12,14 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.core import callback
 
-from ..ampio import unpack_item_address
+from ..ampio import unpack_item_address, Ampio, ATTR_MODULE_NAME, ATTR_MODULE_PART_NUMBER, ATTR_CAN_ID
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "ampio"
+
+
+DEPENDENCIES = ['ampio']
 
 
 CONF_CAN_ID = "can_id"
@@ -54,7 +57,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_ITEM): unpack_item_address,
     vol.Optional(CONF_NAME, default=None): cv.string,
     vol.Optional(CONF_TYPE): cv.string,
-    vol.Optional(CONF_FRIENDLY_NAME, default=None): cv.string,
 })
 
 
@@ -62,7 +64,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     # TODO: This should be removed when pyampio refactored to allow callback register before discovery
-    while DOMAIN not in hass.data or not hass.data[DOMAIN].state.value == 8:
+    while DOMAIN not in hass.data or not hass.data[DOMAIN].is_ready:
         yield
 
     if discovery_info is not None:
@@ -81,27 +83,23 @@ def async_add_devices_discovery(hass, discovery_info, async_add_devices):
         async_add_devices([AmpioSensor(hass, item)])
 
 
-class AmpioSensor(Entity):
+class AmpioSensor(Ampio, Entity):
 
     def __init__(self, hass, config):
         self.hass = hass
         self.ampio = hass.data[DOMAIN]
         self.config = config
+        self._can_id = config[CONF_ITEM][0]
+        self._index = config[CONF_ITEM][2]
 
         self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(*config[CONF_ITEM]))
         self.ampio.register_on_value_change_callback(*config[CONF_ITEM], callback=self.schedule_update_ha_state)
         self._device_class = config.get(CONF_DEVICE_CLASS, None)
-        self._attributes = {}
+        self._attributes = dict()
 
-        if CONF_FRIENDLY_NAME in config:
-            self._attributes = {
-                ATTR_FRIENDLY_NAME: config[CONF_FRIENDLY_NAME],
-            }
-        else:
-            self._attributes = {
-                ATTR_FRIENDLY_NAME: self.ampio.get_module_name(config[CONF_ITEM][0]),
-            }
-
+        self._attributes[ATTR_MODULE_NAME] = self.ampio.get_module_name(self._can_id)
+        self._attributes[ATTR_MODULE_PART_NUMBER] = self.ampio.get_module_part_number(self._can_id)
+        self._attributes[ATTR_CAN_ID] = "{:08x}".format(self._can_id)
 
     @property
     def state(self):
@@ -111,6 +109,24 @@ class AmpioSensor(Entity):
     def name(self):
         """Return the name of the entity."""
         return self._name
+
+    @property
+    def registry_name(self):
+        return self._registry_name
+
+    @registry_name.setter
+    def registry_name(self, name):
+        if name:
+            self._registry_name = name
+        else:
+            if self._attributes[ATTR_MODULE_PART_NUMBER] == 'MULTISENS':
+                name = self._attributes[ATTR_MODULE_NAME]
+
+            if name:
+                self._registry_name = name
+            else:
+                self._registry_name = None
+
 
     @property
     def should_poll(self):

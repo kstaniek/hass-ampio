@@ -7,17 +7,20 @@ import voluptuous as vol
 from homeassistant.components.climate import (PLATFORM_SCHEMA, ClimateDevice, TEMP_CELSIUS,
                                               SUPPORT_TARGET_TEMPERATURE, SUPPORT_TARGET_HUMIDITY,
                                               SUPPORT_TARGET_HUMIDITY_HIGH, SUPPORT_TARGET_HUMIDITY_LOW,
-                                              SUPPORT_OPERATION_MODE, SUPPORT_ON_OFF)
+                                              SUPPORT_OPERATION_MODE)
 
 import homeassistant.helpers.config_validation as cv
 
 from homeassistant.const import (CONF_NAME, CONF_FRIENDLY_NAME, STATE_UNKNOWN, ATTR_FRIENDLY_NAME, STATE_ON, STATE_OFF)
 
-from ..ampio import unpack_item_address
+from ..ampio import unpack_item_address, Ampio
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'ampio'
+
+
+DEPENDENCIES = ['ampio']
 
 CONF_ITEM = 'item'
 CONF_TARGET_ITEM = 'target_item'
@@ -53,7 +56,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_TARGET_ITEM): unpack_item_address,
     vol.Optional(CONF_HUMIDITY_ITEM): unpack_item_address,
     vol.Optional(CONF_OPERATION_MODE_ITEM): unpack_item_address,
-    vol.Optional(CONF_FRIENDLY_NAME, default=None): cv.string,
 })
 
 
@@ -61,7 +63,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     # TODO: This should be removed when pyampio refactored to allow callback register before discovery
-    while DOMAIN not in hass.data or not hass.data[DOMAIN].state.value == 8:
+    while DOMAIN not in hass.data or not hass.data[DOMAIN].is_ready:
         yield
 
     if discovery_info is not None:
@@ -71,7 +73,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     return True
 
 
-class AmpioClimate(ClimateDevice):
+class AmpioClimate(Ampio, ClimateDevice):
     def __init__(self, hass, config):
         self.hass = hass
         self.config = config
@@ -82,13 +84,12 @@ class AmpioClimate(ClimateDevice):
         self._name = config.get(CONF_NAME, "{:08x}_{}_{}".format(*config[CONF_ITEM]))
         self.ampio.register_on_value_change_callback(*config[CONF_ITEM], callback=self.schedule_update_ha_state)
 
-        self._attributes = {}
+        self._attributes = dict()
         self._supported_features = 0
 
         if CONF_TARGET_ITEM in config:
             self._supported_features |= SUPPORT_TARGET_TEMPERATURE
             self.ampio.register_on_value_change_callback(*config[CONF_TARGET_ITEM], callback=self.schedule_update_ha_state)
-
 
         if CONF_HUMIDITY_ITEM in config:
             self.ampio.register_on_value_change_callback(*config[CONF_HUMIDITY_ITEM], callback=self.schedule_update_ha_state)
@@ -99,9 +100,6 @@ class AmpioClimate(ClimateDevice):
                                                          callback=self.schedule_update_ha_state)
             self._supported_features |= SUPPORT_OPERATION_MODE
 
-        if CONF_FRIENDLY_NAME in config:
-            self._attributes[ATTR_FRIENDLY_NAME] = config[CONF_FRIENDLY_NAME]
-
         self._attributes[ATTR_MODULE_NAME] = self.ampio.get_module_name(config[CONF_ITEM][0])
         self._attributes[ATTR_MODULE_PART_NUMBER] = self.ampio.get_module_part_number(config[CONF_ITEM][0])
         self._attributes[ATTR_CAN_ID] = config[CONF_ITEM][0]
@@ -111,17 +109,12 @@ class AmpioClimate(ClimateDevice):
         return self._name
 
     @property
-    def should_poll(self):
-        """No polling needed within Ampio."""
-        return False
-
-    @property
     def temperature_unit(self):
         return TEMP_CELSIUS
 
-    @property
-    def is_on(self):
-        return False
+    # @property
+    # def is_on(self):
+    #     return False
 
     # @property
     # def state(self):
@@ -134,6 +127,12 @@ class AmpioClimate(ClimateDevice):
     #     if self.is_on:
     #         return STATE_ON
     #     return STATE_UNKNOWN
+    @property
+    def is_heating(self):
+        try:
+            return self.ampio.get_item_state(self._can_id, 'heating', self._index)
+        except TypeError:
+            return None
 
     @property
     def current_temperature(self):
@@ -170,11 +169,15 @@ class AmpioClimate(ClimateDevice):
         """Return current operation ie. heat, cool, idle."""
         if self._supported_features & SUPPORT_OPERATION_MODE:
             try:
-                return OperationMode(self.ampio.get_item_state(*self.config[CONF_OPERATION_MODE_ITEM])).name
+                operation = OperationMode(self.ampio.get_item_state(*self.config[CONF_OPERATION_MODE_ITEM])).name
+                if self.is_heating:
+                    operation = "{}(Heating)".format(operation)
+                return operation
             except (TypeError, KeyError, ValueError):
                 return None
         else:
             return None
+
     @property
     def operation_list(self):
         """Return the list of available operation modes."""

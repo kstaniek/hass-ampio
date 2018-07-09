@@ -20,15 +20,17 @@ discovery:
 frontend:
 
 logger:
-  default: info
+  default: debug
   logs:
-    homeassistant.components: info
-    homeassistant.custom_components.ampio: debug
+    homeassistant.components: debug
+    homeassistant.components.ampio: debug
+    pyampio: info
 
 
 config:
 
 ampio:
+  # port: /dev/tty.usbserial-DN01D1W1
   port: /dev/tty.usbserial-DN01D1W1
   autoconfig:
     - module: MULTISENS
@@ -67,33 +69,102 @@ ampio:
           begin: 1
           end: 3
 
+#    - module: MDOT-2
+#      items:
+#        - name: bin_input
+#          begin: 1
+#          end: 2
+#        - name: bin_output
+#          begin: 1
+#          end: 2
+#    - module: MDOT-4
+#      items:
+#        - name: bin_input
+#          begin: 1
+#          end: 4
+#        - name: bin_output
+#          begin: 1
+#          end: 4
+#    - module: MDOT-9
+#      items:
+#        - name: bin_input
+#          begin: 1
+#          end: 9
+#        - name: bin_output
+#          begin: 1
+#          end: 9
+#    - module: MDOT-15LCD
+#      items:
+#        - name: bin_input
+#          begin: 1
+#          end: 15
+#        - name: bin_output
+#          begin: 1
+#          end: 15
+
+
 
 
 group:
   Alarm:
-   - alarm_control_panel.a_ground_floor
-   - alarm_control_panel.a_upper_floor
-   - alarm_control_panel.a_outside
+    - alarm_control_panel.a_ground_floor
+    - alarm_control_panel.a_upper_floor
+    - alarm_control_panel.a_outside
+
+  Light:
+    - light.l_salon_1
+    - light.l_salon_2
+    - light.l_salon_3
+    - light.l_salon_4
+    - light.l_salon_5
+    - light.l_salon_6
+    - light.l_salon_7
+    - light.l_salon_8
+    - light.l_salon_9
+    - light.l_salon_10
+    - light.l_salon_11
+    - light.l_salon_12
+
 
 alarm_control_panel:
   - platform: ampio
     name: a_ground_floor
     item: 0x00001ecc/.*/1
     friendly_name: Strefa Parteru
+    arm_away: yes
 
   - platform: ampio
     name: a_upper_floor
     item: 0x00001ecc/.*/2
     friendly_name: Strefa Piętra
+    arm_away: yes
 
   - platform: ampio
     name: a_outside
     item: 0x00001ecc/.*/3
     friendly_name: Strefa Zewnętrzna
-
-
+    arm_home: yes
 
 light:
+  - platform: ampio
+    name: l_wc_mled1
+    item: 0x1e53/bin_output/7
+    bright_item: 0x1e53/output/7
+    friendly_name: WC MLED
+
+  - platform: ampio
+    name: l_wc_mled2
+    item: 0x1e53/bin_output/8
+    bright_item: 0x1e53/output/8
+    friendly_name: WC MLED
+
+
+  - platform: ampio
+    name: l_wc_led
+    item: 0x1885/bin_output/3
+    bright_item: 0x1885/output/3
+    friendly_name: WC LED
+
   - platform: ampio
     name: l_terrace_halogen
     item: 0x00001ae0/bin_output/4
@@ -118,6 +189,73 @@ light:
     bright_item: 0x1e5d/output/1
     friendly_name: MLED Salon 1
 
+  - platform: ampio
+    name: l_salon_2
+    item: 0x1e5d/bin_output/2
+    bright_item: 0x1e5d/output/2
+    friendly_name: MLED Salon 2
+
+  - platform: ampio
+    name: l_salon_3
+    item: 0x1e5d/bin_output/3
+    bright_item: 0x1e5d/output/3
+    friendly_name: MLED Salon 3
+
+  - platform: ampio
+    name: l_salon_4
+    item: 0x1e5d/bin_output/4
+    bright_item: 0x1e5d/output/4
+    friendly_name: MLED Salon 4
+
+  - platform: ampio
+    name: l_salon_5
+    item: 0x1e5d/bin_output/5
+    bright_item: 0x1e5d/output/5
+    friendly_name: MLED Salon 5
+
+  - platform: ampio
+    name: l_salon_6
+    item: 0x1e5d/bin_output/6
+    bright_item: 0x1e5d/output/6
+    friendly_name: MLED Salon 6
+
+  - platform: ampio
+    name: l_salon_7
+    item: 0x1e5d/bin_output/7
+    bright_item: 0x1e5d/output/7
+    friendly_name: MLED Salon 7
+
+  - platform: ampio
+    name: l_salon_8
+    item: 0x1e5d/bin_output/8
+    bright_item: 0x1e5d/output/8
+    friendly_name: MLED Salon 8
+
+  - platform: ampio
+    name: l_salon_9
+    item: 0x1e5d/bin_output/9
+    bright_item: 0x1e5d/output/9
+    friendly_name: MLED Salon 9
+
+  - platform: ampio
+    name: l_salon_10
+    item: 0x1e5d/bin_output/10
+    bright_item: 0x1e5d/output/10
+    friendly_name: MLED Salon 10
+
+  - platform: ampio
+    name: l_salon_11
+    item: 0x1e5d/bin_output/11
+    bright_item: 0x1e5d/output/11
+    friendly_name: MLED Salon 11
+
+  - platform: ampio
+    name: l_salon_12
+    item: 0x1e5d/bin_output/12
+    bright_item: 0x1e5d/output/12
+    friendly_name: MLED Salon 12
+
+
 switch:
   - platform: ampio
     name: s_terrace_halogen
@@ -125,12 +263,7 @@ switch:
     friendly_name: Halogen Taras (Switch)
 
 
-cover:
-  - platform: ampio
-    name: c_office_west
-    item: 0x1968/cover_position/3
-    tilt_item: 0x1968/tilt_position/3
-    friendly_name: Gabinet Zachód
+cover: !include_dir_merge_list covers
 
 
 climate:
@@ -212,6 +345,80 @@ climate:
     target_item: 0x1b88/setpoint/11
     operation_mode_item: 0x1b88/mode/11
     friendly_name: Łazienka
+
+sensor:
+
+  - platform: history_stats
+    name: Office Lamp On
+    entity_id: light.l_office
+    state: 'on'
+    type: time
+    end: '{{ now() }}'
+    duration: 00:00:30
+
+
+
+automation:
+  - alias: Living Room Lights Adjust Brightness
+    hide_entity: True
+    trigger:
+      platform: state
+      entity_id: input_number.livingroom_brightness
+    action:
+      - service: light.turn_on
+        data_template:
+          entity_id: group.light
+          brightness: '{{ trigger.to_state.state | int }}'
+
+  - alias: Office Light on for 30s
+    trigger:
+      platform: state
+      entity_id: light.l_office
+      to: 'on'
+
+      for:
+        hours: 1
+
+    action:
+      service: light.turn_off
+      entity_id: light.l_office
+
+  - alias: WC LED on for 30s
+    trigger:
+      platform: state
+      entity_id: light.l_wc_led
+      to: 'on'
+      for:
+        hours: 1
+
+    action:
+      service: light.turn_off
+      entity_id: light.l_wc_led
+
+  - alias: WC MLED1 on for 30s
+    trigger:
+      platform: state
+      entity_id: light.l_wc_mled1
+      to: 'on'
+      for:
+        hours: 1
+
+    action:
+      service: light.turn_off
+      entity_id: light.l_wc_mled1
+
+  - alias: WC MLED2 on for 30s
+    trigger:
+      platform: state
+      entity_id: light.l_wc_mled2
+      to: 'on'
+      for:
+        hours: 1
+
+    action:
+      service: light.turn_off
+      entity_id: light.l_wc_mled2
+
 
 
 
@@ -342,6 +549,11 @@ climate:
 #          friendly_name: Output1
 
 
+camera:
+  - platform: onvif
+    host: 172.31.22.1
+    username: onvif
+    passowrd: onvif
 
 
 
